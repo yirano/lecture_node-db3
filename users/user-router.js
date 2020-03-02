@@ -1,80 +1,76 @@
-const express = require('express');
+const express = require("express")
+const db = require("../data/config")
 
-const db = require('../data/db-config.js');
+const router = express.Router()
 
-const router = express.Router();
+router.get("/", async (req, res, next) => {
+	try {
+		res.json(await db("users"))
+	} catch(err) {
+		next(err)
+	}
+})
 
-router.get('/', (req, res) => {
-  db('users')
-  .then(users => {
-    res.json(users);
-  })
-  .catch (err => {
-    res.status(500).json({ message: 'Failed to get users' });
-  });
-});
+router.get("/:id", validateUserId(), async (req, res, next) => {
+	try {
+		res.json(req.user)
+	} catch(err) {
+		next(err)
+	}
+})
 
-router.get('/:id', (req, res) => {
-  const { id } = req.params;
+router.post("/", async (req, res, next) => {
+	try {
+		const [id] = await db("users").insert(req.body)
+		const user = await db("users").where({ id }).first()
 
-  db('users').where({ id })
-  .then(users => {
-    const user = users[0];
+		res.status(201).json(user)
+	} catch(err) {
+		next(err)
+	}
+})
 
-    if (user) {
-      res.json(user);
-    } else {
-      res.status(404).json({ message: 'Could not find user with given id.' })
-    }
-  })
-  .catch(err => {
-    res.status(500).json({ message: 'Failed to get user' });
-  });
-});
+router.put("/:id", validateUserId(), async (req, res, next) => {
+	try {
+		const { id } = req.params
+		await db("users").where({ id }).update(req.body)
+		const user = await db("users").where({ id }).first()
+		
+		res.json(user)
+	} catch(err) {
+		next(err)
+	}
+})
 
-router.post('/', (req, res) => {
-  const userData = req.body;
+router.delete("/:id", validateUserId(), async (req, res, next) => {
+	try {
+		const { id } = req.params
+		await db("users").where({ id }).del()
 
-  db('users').insert(userData)
-  .then(ids => {
-    res.status(201).json({ created: ids[0] });
-  })
-  .catch(err => {
-    res.status(500).json({ message: 'Failed to create new user' });
-  });
-});
+		res.status(204).end()
+	} catch(err) {
+		next(err)
+	}
+})
 
-router.put('/:id', (req, res) => {
-  const { id } = req.params;
-  const changes = req.body;
+function validateUserId() {
+	return async (req, res, next) => {
+		try {
+			const { id } = req.params
+			const user = await db("users").where({ id }).first()
 
-  db('users').where({ id }).update(changes)
-  .then(count => {
-    if (count) {
-      res.json({ update: count });
-    } else {
-      res.status(404).json({ message: 'Could not find user with given id' });
-    }
-  })
-  .catch(err => {
-    res.status(500).json({ message: 'Failed to update user' });
-  });
-});
+			if (!user) {
+				return res.status(404).json({
+					message: "User not found",
+				})
+			}
 
-router.delete('/:id', (req, res) => {
-  const { id } = req.params;
+			req.user = user
+			next()
+		} catch(err) {
+			next(err)
+		}
+	}
+}
 
-  db('users').where({ id }).del()
-  .then(count => {
-    if (count) {
-      res.json({ removed: count });
-    } else {
-      res.status(404).json({ message: 'Could not find user with given id' });
-    }
-  })
-  .catch(err => {
-    res.status(500).json({ message: 'Failed to delete user' });
-  });
-});
-
-module.exports = router;
+module.exports = router

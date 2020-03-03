@@ -1,7 +1,12 @@
 const express = require("express")
 const db = require("../data/config")
+const postRouter = require("../posts/post-router")
 
 const router = express.Router()
+
+// subrouters can have other subrouters, which will inherit the path prefix
+// and any middleware associated with this router
+router.use("/:id/posts", postRouter)
 
 router.get("/", async (req, res, next) => {
 	try {

@@ -3,7 +3,7 @@ const db = require("../data/config")
 
 const router = express.Router()
 
-router.get("/", async (req, res, next) => {
+router.get("/users", async (req, res, next) => {
 	try {
 		res.json(await db("users"))
 	} catch(err) {
@@ -11,7 +11,7 @@ router.get("/", async (req, res, next) => {
 	}
 })
 
-router.get("/:id", validateUserId(), async (req, res, next) => {
+router.get("/users/:id", validateUserId(), async (req, res, next) => {
 	try {
 		res.json(req.user)
 	} catch(err) {
@@ -19,7 +19,7 @@ router.get("/:id", validateUserId(), async (req, res, next) => {
 	}
 })
 
-router.post("/", async (req, res, next) => {
+router.post("/users", async (req, res, next) => {
 	try {
 		const [id] = await db("users").insert(req.body)
 		const user = await db("users").where({ id }).first()
@@ -30,7 +30,7 @@ router.post("/", async (req, res, next) => {
 	}
 })
 
-router.put("/:id", validateUserId(), async (req, res, next) => {
+router.put("/users/:id", validateUserId(), async (req, res, next) => {
 	try {
 		const { id } = req.params
 		await db("users").where({ id }).update(req.body)
@@ -42,7 +42,7 @@ router.put("/:id", validateUserId(), async (req, res, next) => {
 	}
 })
 
-router.delete("/:id", validateUserId(), async (req, res, next) => {
+router.delete("/users/:id", validateUserId(), async (req, res, next) => {
 	try {
 		const { id } = req.params
 		await db("users").where({ id }).del()
